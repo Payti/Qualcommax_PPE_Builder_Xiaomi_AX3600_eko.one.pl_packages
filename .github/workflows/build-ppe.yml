@@ -134,158 +134,150 @@ jobs:
           set -euo pipefail
           CONFIG_FILE="builder/${{ env.DEVICE_DIR }}/config"
           if [ -f "$CONFIG_FILE" ]; then
-              {
-                # Profil pamięci dla IPQ8071A
-                echo "CONFIG_IPQ_MEM_PROFILE_512=y"
-                echo "CONFIG_KERNEL_IPQ_MEM_PROFILE=512"
-                # =========================================================================
-                # POZOSTAŁE PAKIETY I MODUŁY SYSTEMOWE KONFIGURACJI
-                # =========================================================================
-                echo "CONFIG_ALL_KMODS=y"
-                echo "CONFIG_ALL_NONSHARED=y"
-                echo "CONFIG_PACKAGE_block-mount=m"
-                echo "CONFIG_PACKAGE_kmod-crypto-crc32=m"
-                echo "CONFIG_PACKAGE_kmod-fs-exfat=m"
-                echo "CONFIG_PACKAGE_kmod-fs-f2fs=m"
-                echo "CONFIG_PACKAGE_kmod-fs-ntfs3=m"
-                echo "CONFIG_PACKAGE_kmod-fs-vfat=m"
-                echo "CONFIG_PACKAGE_kmod-nls-cp437=m"
-                echo "CONFIG_PACKAGE_kmod-nls-iso8859-1=m"
-                echo "CONFIG_PACKAGE_kmod-nls-utf8=m"
-                echo "CONFIG_PACKAGE_kmod-scsi-core=m"
-                echo "CONFIG_PACKAGE_kmod-usb-storage=m"
-                echo "CONFIG_PACKAGE_kmod-usb-storage-uas=m"
-                echo "CONFIG_PACKAGE_ip-bridge=y"
-                echo "CONFIG_PACKAGE_ip-full=y"
-                echo "CONFIG_PACKAGE_ipset=m"
-                echo "CONFIG_PACKAGE_iptables-mod-conntrack-extra=y"
-                echo "CONFIG_PACKAGE_kmod-bonding=y"
-                echo "CONFIG_PACKAGE_kmod-crypto-kpp=y"
-                echo "CONFIG_PACKAGE_kmod-crypto-lib-chacha20=y"
-                echo "CONFIG_PACKAGE_kmod-crypto-lib-chacha20poly1305=y"
-                echo "CONFIG_PACKAGE_kmod-crypto-lib-curve25519=y"
-                echo "CONFIG_PACKAGE_kmod-crypto-lib-poly1305=y"
-                echo "CONFIG_PACKAGE_kmod-crypto-sha1=y"
-                echo "CONFIG_PACKAGE_kmod-crypto-sha256=y"
-                echo "CONFIG_PACKAGE_kmod-gre=y"
-                echo "CONFIG_PACKAGE_gre=y"
-                echo "CONFIG_PACKAGE_kmod-macvlan=y"
-                echo "CONFIG_PACKAGE_kmod-nat46=y"
-                echo "CONFIG_PACKAGE_kmod-vxlan=y"
-                echo "CONFIG_PACKAGE_kmod-sit=y"
-                echo "CONFIG_PACKAGE_kmod-ip6-tunnel=y"
-                echo "CONFIG_PACKAGE_igmpproxy=y"
-                echo "CONFIG_PACKAGE_kmod-ipt-conntrack=y"
-                echo "CONFIG_PACKAGE_kmod-ipt-conntrack-extra=y"
-                echo "# CONFIG_PACKAGE_kmod-ipt-rtpengine is not set"
-                echo "CONFIG_PACKAGE_kmod-iptunnel=y"
-                echo "CONFIG_PACKAGE_kmod-l2tp=y"
-                echo "CONFIG_PACKAGE_kmod-nf-conncount=y"
-                echo "CONFIG_PACKAGE_kmod-nft-bridge=y"
-                echo "CONFIG_PACKAGE_kmod-pppol2tp=y"
-                echo "CONFIG_PACKAGE_kmod-pptp=y"
-                echo "CONFIG_PACKAGE_kmod-thermal=m"
-                echo "CONFIG_PACKAGE_kmod-tls=y"
-                echo "CONFIG_PACKAGE_kmod-udptunnel4=y"
-                echo "CONFIG_PACKAGE_kmod-udptunnel6=y"
-                echo "CONFIG_PACKAGE_kmod-wireguard=y"
-                echo "CONFIG_PACKAGE_libbpf=y"
-                echo "CONFIG_PACKAGE_libcap=y"
-                echo "CONFIG_PACKAGE_libcap-ng=y"
-                echo "CONFIG_PACKAGE_libelf=y"
-                echo "CONFIG_PACKAGE_libipset=m"
-                echo "CONFIG_PACKAGE_libqrencode=y"
-                echo "CONFIG_PACKAGE_libwebsockets-full=y"
-                echo "CONFIG_PACKAGE_libxdp=m"
-                echo "CONFIG_PACKAGE_libuv=y"
-                echo "CONFIG_PACKAGE_libzstd=y"
-                echo "CONFIG_PACKAGE_luci-app-mwan3=m"
-                echo "CONFIG_PACKAGE_luci-app-ttyd=y"
-                echo "CONFIG_PACKAGE_luci-app-upnp=y"
-                echo "CONFIG_PACKAGE_luci-i18n-mwan3-pl=m"
-                echo "CONFIG_PACKAGE_luci-i18n-ttyd-pl=y"
-                echo "CONFIG_PACKAGE_luci-i18n-upnp-pl=y"
-                echo "CONFIG_PACKAGE_luci-lib-base=y"
-                echo "CONFIG_PACKAGE_luci-lib-ip=y"
-                echo "CONFIG_PACKAGE_luci-lib-json=y"
-                echo "CONFIG_PACKAGE_luci-lib-nixio=y"
-                echo "CONFIG_PACKAGE_luci-lua-runtime=y"
-                echo "CONFIG_PACKAGE_luci-mod-rpc=y"
-                echo "CONFIG_PACKAGE_luci-proto-gre=y"
-                echo "CONFIG_PACKAGE_luci-proto-vxlan=y"
-                echo "CONFIG_PACKAGE_luci-proto-wireguard=y"
-                echo "CONFIG_PACKAGE_map=y"
-                echo "CONFIG_PACKAGE_mesh11sd=m"
-                echo "CONFIG_PACKAGE_miniupnpd-nftables=y"
-                echo "CONFIG_PACKAGE_mwan3=m"
-                echo "CONFIG_PACKAGE_qca-ssdk-shell=y"
-                echo "CONFIG_PACKAGE_qrencode=y"
-                echo "CONFIG_PACKAGE_tc-full=y"
-                echo "# CONFIG_PACKAGE_tc-tiny is not set"
-                echo "CONFIG_PACKAGE_tcpdump=m"
-                echo "CONFIG_PACKAGE_tcpdump-mini=m"
-                echo "CONFIG_PACKAGE_ttyd=y"
-                echo "CONFIG_PACKAGE_vxlan=y"
-                echo "CONFIG_PACKAGE_wget-ssl=y"
-                echo "CONFIG_PACKAGE_wireguard-tools=y"
-                echo "CONFIG_PACKAGE_xdp-filter=m"
-                echo "CONFIG_PACKAGE_xdp-loader=m"
-                echo "CONFIG_PACKAGE_xdpdump=m"
-                echo "CONFIG_PACKAGE_ds-lite=y"
-                echo "CONFIG_PACKAGE_ethtool=y"
-                echo "CONFIG_PACKAGE_luci=y"
-                echo "CONFIG_LUCI_LANG_pl=y"
-                echo "CONFIG_PACKAGE_luci-app-firewall=y"
-                echo "CONFIG_PACKAGE_sqm-scripts=y"
-                echo "CONFIG_PACKAGE_luci-app-sqm=y"
-                echo "CONFIG_PACKAGE_ppe-qos=y"
-                echo "CONFIG_PACKAGE_luci-app-ppe-qos=y"
-              # =========================================================================
-              # 🔒 WYMUSZENIE DEKLARACJI OPCJI KERNELA TEE / OP-TEE / QCOMTEE DLA PPE
-              # =========================================================================
-              KERNEL_CONFIG_TARGET=$(find ${{ github.workspace }}/openwrt/target/linux/qualcommax/ -name "config-6.18" | head -n 1)
-              if [ -f "$KERNEL_CONFIG_TARGET" ]; then
-                  {
-                    echo "CONFIG_TEE=m"
-                    echo "CONFIG_OPTEE=m"
-                    echo "CONFIG_QCOMTEE=m"
-                    echo "# CONFIG_OPTEE_INSECURE_LOAD_IMAGE is not set"
-                  } >> "$KERNEL_CONFIG_TARGET"
-                  echo "--> SUCCESS: Wszystkie brakujące deklaracje jądra TEE zostały dopisane do $KERNEL_CONFIG_TARGET"
-              fi
-              } >> "$CONFIG_FILE"
-              echo "Successfully patched config for PPE images with Polish language support in luci-base"
+            printf '%s\n' \
+              'CONFIG_IPQ_MEM_PROFILE_512=y' \
+              'CONFIG_KERNEL_IPQ_MEM_PROFILE=512' \
+              'CONFIG_ALL_KMODS=y' \
+              'CONFIG_ALL_NONSHARED=y' \
+              'CONFIG_PACKAGE_block-mount=m' \
+              'CONFIG_PACKAGE_kmod-crypto-crc32=m' \
+              'CONFIG_PACKAGE_kmod-fs-exfat=m' \
+              'CONFIG_PACKAGE_kmod-fs-f2fs=m' \
+              'CONFIG_PACKAGE_kmod-fs-ntfs3=m' \
+              'CONFIG_PACKAGE_kmod-fs-vfat=m' \
+              'CONFIG_PACKAGE_kmod-nls-cp437=m' \
+              'CONFIG_PACKAGE_kmod-nls-iso8859-1=m' \
+              'CONFIG_PACKAGE_kmod-nls-utf8=m' \
+              'CONFIG_PACKAGE_kmod-scsi-core=m' \
+              'CONFIG_PACKAGE_kmod-usb-storage=m' \
+              'CONFIG_PACKAGE_kmod-usb-storage-uas=m' \
+              'CONFIG_PACKAGE_ip-bridge=y' \
+              'CONFIG_PACKAGE_ip-full=y' \
+              'CONFIG_PACKAGE_ipset=m' \
+              'CONFIG_PACKAGE_iptables-mod-conntrack-extra=y' \
+              'CONFIG_PACKAGE_kmod-bonding=y' \
+              'CONFIG_PACKAGE_kmod-crypto-kpp=y' \
+              'CONFIG_PACKAGE_kmod-crypto-lib-chacha20=y' \
+              'CONFIG_PACKAGE_kmod-crypto-lib-chacha20poly1305=y' \
+              'CONFIG_PACKAGE_kmod-crypto-lib-curve25519=y' \
+              'CONFIG_PACKAGE_kmod-crypto-lib-poly1305=y' \
+              'CONFIG_PACKAGE_kmod-crypto-sha1=y' \
+              'CONFIG_PACKAGE_kmod-crypto-sha256=y' \
+              'CONFIG_PACKAGE_kmod-gre=y' \
+              'CONFIG_PACKAGE_gre=y' \
+              'CONFIG_PACKAGE_kmod-macvlan=y' \
+              'CONFIG_PACKAGE_kmod-nat46=y' \
+              'CONFIG_PACKAGE_kmod-vxlan=y' \
+              'CONFIG_PACKAGE_kmod-sit=y' \
+              'CONFIG_PACKAGE_kmod-ip6-tunnel=y' \
+              'CONFIG_PACKAGE_igmpproxy=y' \
+              'CONFIG_PACKAGE_kmod-ipt-conntrack=y' \
+              'CONFIG_PACKAGE_kmod-ipt-conntrack-extra=y' \
+              '# CONFIG_PACKAGE_kmod-ipt-rtpengine is not set' \
+              'CONFIG_PACKAGE_kmod-iptunnel=y' \
+              'CONFIG_PACKAGE_kmod-l2tp=y' \
+              'CONFIG_PACKAGE_kmod-nf-conncount=y' \
+              'CONFIG_PACKAGE_kmod-nft-bridge=y' \
+              'CONFIG_PACKAGE_kmod-pppol2tp=y' \
+              'CONFIG_PACKAGE_kmod-pptp=y' \
+              'CONFIG_PACKAGE_kmod-thermal=m' \
+              'CONFIG_PACKAGE_kmod-tls=y' \
+              'CONFIG_PACKAGE_kmod-udptunnel4=y' \
+              'CONFIG_PACKAGE_kmod-udptunnel6=y' \
+              'CONFIG_PACKAGE_kmod-wireguard=y' \
+              'CONFIG_PACKAGE_libbpf=y' \
+              'CONFIG_PACKAGE_libcap=y' \
+              'CONFIG_PACKAGE_libcap-ng=y' \
+              'CONFIG_PACKAGE_libelf=y' \
+              'CONFIG_PACKAGE_libipset=m' \
+              'CONFIG_PACKAGE_libqrencode=y' \
+              'CONFIG_PACKAGE_libwebsockets-full=y' \
+              'CONFIG_PACKAGE_libxdp=m' \
+              'CONFIG_PACKAGE_libuv=y' \
+              'CONFIG_PACKAGE_libzstd=y' \
+              'CONFIG_PACKAGE_luci-app-mwan3=m' \
+              'CONFIG_PACKAGE_luci-app-ttyd=y' \
+              'CONFIG_PACKAGE_luci-app-upnp=y' \
+              'CONFIG_PACKAGE_luci-i18n-mwan3-pl=m' \
+              'CONFIG_PACKAGE_luci-i18n-ttyd-pl=y' \
+              'CONFIG_PACKAGE_luci-i18n-upnp-pl=y' \
+              'CONFIG_PACKAGE_luci-lib-base=y' \
+              'CONFIG_PACKAGE_luci-lib-ip=y' \
+              'CONFIG_PACKAGE_luci-lib-json=y' \
+              'CONFIG_PACKAGE_luci-lib-nixio=y' \
+              'CONFIG_PACKAGE_luci-lua-runtime=y' \
+              'CONFIG_PACKAGE_luci-mod-rpc=y' \
+              'CONFIG_PACKAGE_luci-proto-gre=y' \
+              'CONFIG_PACKAGE_luci-proto-vxlan=y' \
+              'CONFIG_PACKAGE_luci-proto-wireguard=y' \
+              'CONFIG_PACKAGE_map=y' \
+              'CONFIG_PACKAGE_mesh11sd=m' \
+              'CONFIG_PACKAGE_miniupnpd-nftables=y' \
+              'CONFIG_PACKAGE_mwan3=m' \
+              'CONFIG_PACKAGE_qca-ssdk-shell=y' \
+              'CONFIG_PACKAGE_qrencode=y' \
+              'CONFIG_PACKAGE_tc-full=y' \
+              '# CONFIG_PACKAGE_tc-tiny is not set' \
+              'CONFIG_PACKAGE_tcpdump=m' \
+              'CONFIG_PACKAGE_tcpdump-mini=m' \
+              'CONFIG_PACKAGE_ttyd=y' \
+              'CONFIG_PACKAGE_vxlan=y' \
+              'CONFIG_PACKAGE_wget-ssl=y' \
+              'CONFIG_PACKAGE_wireguard-tools=y' \
+              'CONFIG_PACKAGE_xdp-filter=m' \
+              'CONFIG_PACKAGE_xdp-loader=m' \
+              'CONFIG_PACKAGE_xdpdump=m' \
+              'CONFIG_PACKAGE_ds-lite=y' \
+              'CONFIG_PACKAGE_ethtool=y' \
+              'CONFIG_PACKAGE_luci=y' \
+              'CONFIG_LUCI_LANG_pl=y' \
+              'CONFIG_PACKAGE_luci-app-firewall=y' \
+              'CONFIG_PACKAGE_sqm-scripts=y' \
+              'CONFIG_PACKAGE_luci-app-sqm=y' \
+              'CONFIG_PACKAGE_ppe-qos=y' \
+              'CONFIG_PACKAGE_luci-app-ppe-qos=y' >> "$CONFIG_FILE"
+
+            KERNEL_CONFIG_TARGET=$(find ${{ github.workspace }}/openwrt/target/linux/qualcommax/ -name "config-6.18" | head -n 1)
+            if [ -f "$KERNEL_CONFIG_TARGET" ]; then
+              printf '%s\n' \
+                'CONFIG_TEE=m' \
+                'CONFIG_OPTEE=m' \
+                'CONFIG_QCOMTEE=m' \
+                '# CONFIG_OPTEE_INSECURE_LOAD_IMAGE is not set' >> "$KERNEL_CONFIG_TARGET"
+              echo "--> SUCCESS: Wszystkie brakujące deklaracje jądra TEE zostały dopisane do $KERNEL_CONFIG_TARGET"
             fi
 
-            # =========================================================================
-            # 🇵🇱 SYSTEMOWE SCALENIE I18N DLA PPE (DODANIE DO RDZENIA LUCI-BASE)
-            # =========================================================================
-            SOURCE_PO_DIR="${{ github.workspace }}/builder/$DEVICE_DIR/po/pl"
-            LUCI_BASE_PO="${{ github.workspace }}/openwrt/feeds/luci/modules/luci-base/po/pl/base.po"
-
-            # Dynamiczne poszukiwanie pliku base.po w przypadku przesunięć w feedach LuCI
-            if [ ! -f "$LUCI_BASE_PO" ]; then
-                LUCI_BASE_PO=$(find ${{ github.workspace }}/openwrt/ -path "*/luci-base/po/pl/base.po" | head -n 1)
-            fi
-
-            if [ -f "$SOURCE_PO_DIR/luci-mod-status-nss.po" ]; then
-              if [ -n "$LUCI_BASE_PO" ] && [ -f "$LUCI_BASE_PO" ]; then
-                {
-                  printf '\n'
-                  cat "$SOURCE_PO_DIR/luci-mod-status-nss.po"
-                } >> "$LUCI_BASE_PO"
-                echo "--> SUCCESS: Pomyślnie scalono frazy luci-mod-status-nss z głównym słownikiem systemowym po/pl/base.po"
-              else
-                echo "::warning::Nie znaleziono pliku po/pl/base.po; pomijam scalanie tłumaczeń luci-mod-status-nss."
-              fi
-            else
-              echo "::warning::Brak opcjonalnego pliku $SOURCE_PO_DIR/luci-mod-status-nss.po; pomijam scalanie tłumaczeń."
-            fi
-
-            # Ponowne skopiowanie pliku config i przeładowanie w openwrt
-            cp "$CONFIG_FILE" ${{ github.workspace }}/openwrt/.config
-            make -C ${{ github.workspace }}/openwrt defconfig
+            echo "Successfully patched config for PPE images with Polish language support in luci-base"
           fi
+
+          # =========================================================================
+          # 🇵🇱 SYSTEMOWE SCALENIE I18N DLA PPE (DODANIE DO RDZENIA LUCI-BASE)
+          # =========================================================================
+          SOURCE_PO_DIR="${{ github.workspace }}/builder/$DEVICE_DIR/po/pl"
+          LUCI_BASE_PO="${{ github.workspace }}/openwrt/feeds/luci/modules/luci-base/po/pl/base.po"
+
+          # Dynamiczne poszukiwanie pliku base.po w przypadku przesunięć w feedach LuCI
+          if [ ! -f "$LUCI_BASE_PO" ]; then
+            LUCI_BASE_PO=$(find ${{ github.workspace }}/openwrt/ -path "*/luci-base/po/pl/base.po" | head -n 1)
+          fi
+
+          if [ -f "$SOURCE_PO_DIR/luci-mod-status-nss.po" ]; then
+            if [ -n "$LUCI_BASE_PO" ] && [ -f "$LUCI_BASE_PO" ]; then
+              {
+                printf '\n'
+                cat "$SOURCE_PO_DIR/luci-mod-status-nss.po"
+              } >> "$LUCI_BASE_PO"
+              echo "--> SUCCESS: Pomyślnie scalono frazy luci-mod-status-nss z głównym słownikiem systemowym po/pl/base.po"
+            else
+              echo "::warning::Nie znaleziono pliku po/pl/base.po; pomijam scalanie tłumaczeń luci-mod-status-nss."
+            fi
+          else
+            echo "::warning::Brak opcjonalnego pliku $SOURCE_PO_DIR/luci-mod-status-nss.po; pomijam scalanie tłumaczeń."
+          fi
+
+          # Ponowne skopiowanie pliku config i przeładowanie w openwrt
+          cp "$CONFIG_FILE" ${{ github.workspace }}/openwrt/.config
+          make -C ${{ github.workspace }}/openwrt defconfig
 
       - name: Dynamically update custom OpenWrt banner info
         working-directory: openwrt
