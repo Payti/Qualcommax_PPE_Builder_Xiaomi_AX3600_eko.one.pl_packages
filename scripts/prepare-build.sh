@@ -77,6 +77,32 @@ log::info "Updating + installing all feeds"
 # 1b. Apply local patches to feed packages
 #     (patches/feeds/<variant>/<feed>/*.patch, paths relative to the feed
 #     root), so a patch rides only the flavour it is for.
+apply_metadata_patch() {
+  local patch_file="$1"
+  local feed_dir="$2"
+  local relative_file
+  local target_file
+  local assignment
+  local key
+
+  relative_file=$(sed -n 's|^--- a/||p' "$patch_file" | head -n 1)
+  [[ -n "$relative_file" ]] || return 1
+  target_file="$feed_dir/$relative_file"
+  [[ -f "$target_file" ]] || return 1
+
+  while IFS= read -r assignment; do
+    assignment="${assignment#+}"
+    key="${assignment%%:=*}"
+    grep -qF "$key:=" "$target_file" || return 1
+  done < <(grep -E '^\+PKG_[A-Za-z0-9_]+:=' "$patch_file")
+
+  while IFS= read -r assignment; do
+    assignment="${assignment#+}"
+    key="${assignment%%:=*}"
+    sed -i "s|^${key}:=.*|${assignment}|" "$target_file"
+  done < <(grep -E '^\+PKG_[A-Za-z0-9_]+:=' "$patch_file")
+}
+
 shopt -s nullglob
 for p in "$BUILDER_REPO/patches/feeds/$VARIANT"/*/*.patch; do
   feed="feeds/$(basename "$(dirname "$p")")"
@@ -85,11 +111,14 @@ for p in "$BUILDER_REPO/patches/feeds/$VARIANT"/*/*.patch; do
     patch -p1 -d "$feed" --forward <"$p"
   elif patch -p1 -d "$feed" --dry-run --reverse <"$p" >/dev/null 2>&1; then
     log::info "Skipping $(basename "$p") (already applied)"
+  elif apply_metadata_patch "$p" "$feed"; then
+    log::info "Applied version-independent metadata patch to $feed with $(basename "$p")"
   else
     log::die "$(basename "$p") does not apply to $feed"
   fi
 done
 shopt -u nullglob
+unset -f apply_metadata_patch
 
 # 2. Assemble .config from the device config, then resolve.
 log::info "Assembling .config from ${CONFIGS[*]#"$BUILDER_REPO"/}"
