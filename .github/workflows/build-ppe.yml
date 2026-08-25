@@ -1,0 +1,469 @@
+name: Build PPE
+
+# Builds the PPE images for the Xiaomi AX3600:
+#   check -> build -> prune
+# All build parameters live in the `env:` block below — it is the one file you edit.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'devices/**'
+      - 'patches/feeds/ppe/**'
+      - 'scripts/**'
+      - '.github/workflows/build-ppe.yml'
+  schedule:
+    - cron: "0 */2 * * *"
+
+concurrency:
+  group: build-ppe-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  UPSTREAM_REPO: JuliusBairaktaris/openwrt-nss-edma
+  UPSTREAM_REF: ppe-flow-offload
+  # No overlay files for this flavour; VARIANT picks files.<variant> and
+  # patches/feeds/<variant>.
+  VARIANT: ppe
+  # The luci feed comes from the fork carrying luci-app-ppe-qos (openwrt/luci
+  # PR 8965); prepare-build.sh swaps it in for the default luci feed.
+  TARGET: qualcommax/ipq807x
+  DEVICE: xiaomi_ax3600
+  DEVICE_DIR: devices/xiaomi_ax3600
+  RELEASE_PREFIX: ppe
+  KEEP: "4"
+  FEEDS: |
+    src-git luci https://github.com/JuliusBairaktaris/luci.git;luci-app-ppe-qos
+    src-git obsy https://github.com/obsy/packages
+
+jobs:
+  check:
+    name: Check ppe-flow-offload
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      sha: ${{ steps.check.outputs.sha }}
+      need: ${{ steps.check.outputs.need }}
+    steps:
+      - id: check
+        run: |
+          set -euo pipefail
+          sha="$(git ls-remote "https://github.com/$UPSTREAM_REPO" "$UPSTREAM_REF" | awk 'NR==1{print $1}')"
+          [[ -n "$sha" ]] || { echo "::error::could not resolve $UPSTREAM_REPO@$UPSTREAM_REF"; exit 1; }
+
+          # Only a scheduled tick may skip: a push changed the builder config and
+          # a dispatch is an explicit request. The release body carries the SHA it
+          # was built from, and it is only written once a build has succeeded, so
+          # a failed run re-triggers on the next tick instead of stamping itself.
+          need=true
+          if [[ "$GITHUB_EVENT_NAME" == schedule ]] &&
+            gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].body' 2>/dev/null |
+            grep -qF "$sha"; then
+            need=false
+          fi
+
+          echo "$UPSTREAM_REF -> ${sha:0:12}  build=$need"
+          {
+            echo "sha=$sha"
+            echo "need=$need"
+          } >>"$GITHUB_OUTPUT"
+
+  build:
+    name: Build OpenWrt PPE images
+    needs: check
+    if: needs.check.outputs.need == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Install build dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            bzip2 g++ gawk gcc git glibc-source libncurses-dev make rsync mc
+
+      - name: Start tmate session in background (5 min timeout) for SSH login
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+          detached: true
+          connect-timeout-seconds: 300
+
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          swap-storage: false
+
+      - name: Checkout OpenWrt source
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.UPSTREAM_REPO }}
+          ref: ${{ needs.check.outputs.sha }}
+          fetch-depth: 0
+          path: openwrt
+
+      - name: Checkout builder repo
+        uses: actions/checkout@v7
+        with:
+          path: builder
+
+      - name: Prepare build environment
+        env:
+          OPENWRT_DIR: ${{ github.workspace }}/openwrt
+          BUILDER_REPO: ${{ github.workspace }}/builder
+        run: bash builder/scripts/prepare-build.sh
+
+      # KROK B: Dynamiczne ustawianie wersji NSS Firmware w pliku .config
+      - name: Tweak config for PPE Firmware version
+        run: |
+          set -euo pipefail
+          CONFIG_FILE="builder/${{ env.DEVICE_DIR }}/config"
+          if [ -f "$CONFIG_FILE" ]; then
+              {
+                # Profil pamięci dla IPQ8071A
+                echo "CONFIG_IPQ_MEM_PROFILE_512=y"
+                echo "CONFIG_KERNEL_IPQ_MEM_PROFILE=512"
+                # =========================================================================
+                # POZOSTAŁE PAKIETY I MODUŁY SYSTEMOWE KONFIGURACJI
+                # =========================================================================
+                echo "CONFIG_ALL_KMODS=y"
+                echo "CONFIG_ALL_NONSHARED=y"
+                echo "CONFIG_PACKAGE_block-mount=m"
+                echo "CONFIG_PACKAGE_kmod-crypto-crc32=m"
+                echo "CONFIG_PACKAGE_kmod-fs-exfat=m"
+                echo "CONFIG_PACKAGE_kmod-fs-f2fs=m"
+                echo "CONFIG_PACKAGE_kmod-fs-ntfs3=m"
+                echo "CONFIG_PACKAGE_kmod-fs-vfat=m"
+                echo "CONFIG_PACKAGE_kmod-nls-cp437=m"
+                echo "CONFIG_PACKAGE_kmod-nls-iso8859-1=m"
+                echo "CONFIG_PACKAGE_kmod-nls-utf8=m"
+                echo "CONFIG_PACKAGE_kmod-scsi-core=m"
+                echo "CONFIG_PACKAGE_kmod-usb-storage=m"
+                echo "CONFIG_PACKAGE_kmod-usb-storage-uas=m"
+                echo "CONFIG_PACKAGE_ip-bridge=y"
+                echo "CONFIG_PACKAGE_ip-full=y"
+                echo "CONFIG_PACKAGE_ipset=m"
+                echo "CONFIG_PACKAGE_iptables-mod-conntrack-extra=y"
+                echo "CONFIG_PACKAGE_kmod-bonding=y"
+                echo "CONFIG_PACKAGE_kmod-crypto-kpp=y"
+                echo "CONFIG_PACKAGE_kmod-crypto-lib-chacha20=y"
+                echo "CONFIG_PACKAGE_kmod-crypto-lib-chacha20poly1305=y"
+                echo "CONFIG_PACKAGE_kmod-crypto-lib-curve25519=y"
+                echo "CONFIG_PACKAGE_kmod-crypto-lib-poly1305=y"
+                echo "CONFIG_PACKAGE_kmod-crypto-sha1=y"
+                echo "CONFIG_PACKAGE_kmod-crypto-sha256=y"
+                echo "CONFIG_PACKAGE_kmod-gre=y"
+                echo "CONFIG_PACKAGE_gre=y"
+                echo "CONFIG_PACKAGE_kmod-macvlan=y"
+                echo "CONFIG_PACKAGE_kmod-nat46=y"
+                echo "CONFIG_PACKAGE_kmod-vxlan=y"
+                echo "CONFIG_PACKAGE_kmod-sit=y"
+                echo "CONFIG_PACKAGE_kmod-ip6-tunnel=y"
+                echo "CONFIG_PACKAGE_igmpproxy=y"
+                echo "CONFIG_PACKAGE_kmod-ipt-conntrack=y"
+                echo "CONFIG_PACKAGE_kmod-ipt-conntrack-extra=y"
+                echo "# CONFIG_PACKAGE_kmod-ipt-rtpengine is not set"
+                echo "CONFIG_PACKAGE_kmod-iptunnel=y"
+                echo "CONFIG_PACKAGE_kmod-l2tp=y"
+                echo "CONFIG_PACKAGE_kmod-nf-conncount=y"
+                echo "CONFIG_PACKAGE_kmod-nft-bridge=y"
+                echo "CONFIG_PACKAGE_kmod-pppol2tp=y"
+                echo "CONFIG_PACKAGE_kmod-pptp=y"
+                echo "CONFIG_PACKAGE_kmod-thermal=m"
+                echo "CONFIG_PACKAGE_kmod-tls=y"
+                echo "CONFIG_PACKAGE_kmod-udptunnel4=y"
+                echo "CONFIG_PACKAGE_kmod-udptunnel6=y"
+                echo "CONFIG_PACKAGE_kmod-wireguard=y"
+                echo "CONFIG_PACKAGE_libbpf=y"
+                echo "CONFIG_PACKAGE_libcap=y"
+                echo "CONFIG_PACKAGE_libcap-ng=y"
+                echo "CONFIG_PACKAGE_libelf=y"
+                echo "CONFIG_PACKAGE_libipset=m"
+                echo "CONFIG_PACKAGE_libqrencode=y"
+                echo "CONFIG_PACKAGE_libwebsockets-full=y"
+                echo "CONFIG_PACKAGE_libxdp=m"
+                echo "CONFIG_PACKAGE_libuv=y"
+                echo "CONFIG_PACKAGE_libzstd=y"
+                echo "CONFIG_PACKAGE_luci-app-mwan3=m"
+                echo "CONFIG_PACKAGE_luci-app-ttyd=y"
+                echo "CONFIG_PACKAGE_luci-app-upnp=y"
+                echo "CONFIG_PACKAGE_luci-i18n-mwan3-pl=m"
+                echo "CONFIG_PACKAGE_luci-i18n-ttyd-pl=y"
+                echo "CONFIG_PACKAGE_luci-i18n-upnp-pl=y"
+                echo "CONFIG_PACKAGE_luci-lib-base=y"
+                echo "CONFIG_PACKAGE_luci-lib-ip=y"
+                echo "CONFIG_PACKAGE_luci-lib-json=y"
+                echo "CONFIG_PACKAGE_luci-lib-nixio=y"
+                echo "CONFIG_PACKAGE_luci-lua-runtime=y"
+                echo "CONFIG_PACKAGE_luci-mod-rpc=y"
+                echo "CONFIG_PACKAGE_luci-proto-gre=y"
+                echo "CONFIG_PACKAGE_luci-proto-vxlan=y"
+                echo "CONFIG_PACKAGE_luci-proto-wireguard=y"
+                echo "CONFIG_PACKAGE_map=y"
+                echo "CONFIG_PACKAGE_mesh11sd=m"
+                echo "CONFIG_PACKAGE_miniupnpd-nftables=y"
+                echo "CONFIG_PACKAGE_mwan3=m"
+                echo "CONFIG_PACKAGE_qca-ssdk-shell=y"
+                echo "CONFIG_PACKAGE_qrencode=y"
+                echo "CONFIG_PACKAGE_tc-full=y"
+                echo "# CONFIG_PACKAGE_tc-tiny is not set"
+                echo "CONFIG_PACKAGE_tcpdump=m"
+                echo "CONFIG_PACKAGE_tcpdump-mini=m"
+                echo "CONFIG_PACKAGE_ttyd=y"
+                echo "CONFIG_PACKAGE_vxlan=y"
+                echo "CONFIG_PACKAGE_wget-ssl=y"
+                echo "CONFIG_PACKAGE_wireguard-tools=y"
+                echo "CONFIG_PACKAGE_xdp-filter=m"
+                echo "CONFIG_PACKAGE_xdp-loader=m"
+                echo "CONFIG_PACKAGE_xdpdump=m"
+                echo "CONFIG_PACKAGE_ds-lite=y"
+                echo "CONFIG_PACKAGE_ethtool=y"
+                echo "CONFIG_PACKAGE_luci=y"
+                echo "CONFIG_LUCI_LANG_pl=y"
+                echo "CONFIG_PACKAGE_luci-app-firewall=y"
+                echo "CONFIG_PACKAGE_sqm-scripts=y"
+                echo "CONFIG_PACKAGE_luci-app-sqm=y"
+                echo "CONFIG_PACKAGE_ppe-qos=y"
+                echo "CONFIG_PACKAGE_luci-app-ppe-qos=y"
+              # =========================================================================
+              # 🔒 WYMUSZENIE DEKLARACJI OPCJI KERNELA TEE / OP-TEE / QCOMTEE DLA PPE
+              # =========================================================================
+              KERNEL_CONFIG_TARGET=$(find ${{ github.workspace }}/openwrt/target/linux/qualcommax/ -name "config-6.18" | head -n 1)
+              if [ -f "$KERNEL_CONFIG_TARGET" ]; then
+                  {
+                    echo "CONFIG_TEE=m"
+                    echo "CONFIG_OPTEE=m"
+                    echo "CONFIG_QCOMTEE=m"
+                    echo "# CONFIG_OPTEE_INSECURE_LOAD_IMAGE is not set"
+                  } >> "$KERNEL_CONFIG_TARGET"
+                  echo "--> SUCCESS: Wszystkie brakujące deklaracje jądra TEE zostały dopisane do $KERNEL_CONFIG_TARGET"
+              fi
+              } >> "$CONFIG_FILE"
+              echo "Successfully patched config for PPE images with Polish language support in luci-base"
+            fi
+
+            # =========================================================================
+            # 🇵🇱 SYSTEMOWE SCALENIE I18N DLA PPE (DODANIE DO RDZENIA LUCI-BASE)
+            # =========================================================================
+            SOURCE_PO_DIR="${{ github.workspace }}/builder/$DEVICE_DIR/po/pl"
+            LUCI_BASE_PO="${{ github.workspace }}/openwrt/feeds/luci/modules/luci-base/po/pl/base.po"
+
+            # Dynamiczne poszukiwanie pliku base.po w przypadku przesunięć w feedach LuCI
+            if [ ! -f "$LUCI_BASE_PO" ]; then
+                LUCI_BASE_PO=$(find ${{ github.workspace }}/openwrt/ -path "*/luci-base/po/pl/base.po" | head -n 1)
+            fi
+
+            if [ -f "$SOURCE_PO_DIR/luci-mod-status-nss.po" ]; then
+              if [ -n "$LUCI_BASE_PO" ] && [ -f "$LUCI_BASE_PO" ]; then
+                {
+                  printf '\n'
+                  cat "$SOURCE_PO_DIR/luci-mod-status-nss.po"
+                } >> "$LUCI_BASE_PO"
+                echo "--> SUCCESS: Pomyślnie scalono frazy luci-mod-status-nss z głównym słownikiem systemowym po/pl/base.po"
+              else
+                echo "::warning::Nie znaleziono pliku po/pl/base.po; pomijam scalanie tłumaczeń luci-mod-status-nss."
+              fi
+            else
+              echo "::warning::Brak opcjonalnego pliku $SOURCE_PO_DIR/luci-mod-status-nss.po; pomijam scalanie tłumaczeń."
+            fi
+
+            # Ponowne skopiowanie pliku config i przeładowanie w openwrt
+            cp "$CONFIG_FILE" ${{ github.workspace }}/openwrt/.config
+            make -C ${{ github.workspace }}/openwrt defconfig
+          fi
+
+      - name: Dynamically update custom OpenWrt banner info
+        working-directory: openwrt
+        run: |
+          set -euo pipefail
+
+          if [ -f scripts/getver.sh ]; then
+            OPENWRT_VERSION_RAW=$(bash scripts/getver.sh)
+          else
+            OPENWRT_VERSION_RAW=$(git rev-parse --short=10 HEAD)
+          fi
+
+          OPENWRT_VERSION="OpenWrt SNAPSHOT, ${OPENWRT_VERSION_RAW}"
+          CURRENT_BUILD_TIME=$(date -u +"%Y-%m-%d %H:%M UTC")
+
+          if [ -f files/etc/banner ]; then
+            VERSION_LINE="OpenWrt SNAPSHOT, ${OPENWRT_VERSION_RAW} (ppe)"
+            DATE_LINE="Build time: $CURRENT_BUILD_TIME"
+
+            VERSION_PADDING=$(printf '%-74s' "$VERSION_LINE")
+            FINAL_VERSION_ROW=" | ${VERSION_PADDING}|"
+
+            DATE_PADDING=$(printf '%-74s' "$DATE_LINE")
+            FINAL_DATE_ROW=" | ${DATE_PADDING}|"
+
+            sed -i "s#.*VERSION_PLACEHOLDER.*#$FINAL_VERSION_ROW#g" files/etc/banner
+            sed -i "s#.*DATE_PLACEHOLDER.*#$FINAL_DATE_ROW#g" files/etc/banner
+
+            echo "Successfully injected real git version and build time into PPE banner."
+          else
+            echo "::warning::Custom banner file was not deployed by prepare-build.sh to openwrt/files/etc/banner"
+            VERSION_LINE="OpenWrt SNAPSHOT"
+            FINAL_VERSION_ROW=""
+            DATE_LINE=""
+            FINAL_DATE_ROW=""
+          fi
+
+          TARGET_RELEASE_FILE="package/base-files/files/etc/openwrt_release"
+          DISTRIB_DESCRIPTION="${OPENWRT_VERSION} (ppe - PPE build by @Payti)"
+          if [ -f "$TARGET_RELEASE_FILE" ]; then
+            sed -i '/DISTRIB_DESCRIPTION=/d' "$TARGET_RELEASE_FILE" || true
+            echo "DISTRIB_DESCRIPTION='${DISTRIB_DESCRIPTION}'" >> "$TARGET_RELEASE_FILE"
+          fi
+
+          echo "=================================================="
+          echo "OPENWRT_VERSION:         $OPENWRT_VERSION"
+          echo "CURRENT_BUILD_TIME:      $CURRENT_BUILD_TIME"
+          echo "VERSION_LINE:            ${VERSION_LINE:-}"
+          echo "DATE_LINE:               ${DATE_LINE:-}"
+          echo "FINAL_VERSION_ROW:       ${FINAL_VERSION_ROW:-}"
+          echo "FINAL_DATE_ROW:          ${FINAL_DATE_ROW:-}"
+          echo "=================================================="
+
+      - name: Set reproducible-build env
+        working-directory: openwrt
+        run: |
+          set -euo pipefail
+          {
+            echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)"
+            echo "TZ=UTC"
+            echo "LC_ALL=C"
+            echo "KBUILD_BUILD_USER=builder"
+            echo "KBUILD_BUILD_HOST=github"
+          } >>"$GITHUB_ENV"
+
+      - name: Download sources
+        working-directory: openwrt
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            make download -j"$(nproc)" V=s && break
+            echo "Download attempt $attempt failed; retrying..."
+            sleep 5
+          done
+
+      - name: Update and install feeds + disable packages
+        working-directory: openwrt
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+          echo "### Usuwanie pakietów dahdi-linux, rtl8812au-ct, xdp-tools ponieważ się nie kompilują! ###"
+          rm -rf package/feeds/telephony/dahdi-linux
+          rm -rf package/kernel/rtl8812au-ct
+          rm -rf package/network/utils/xdp-tools
+
+          # 🛠️ AUTOMATYCZNA PĘTLA PATCHUJĄCA FEEDY (ZABEZPIECZONA ŚCIEŻKA WORKSPACE)
+          shopt -s nullglob
+          for p in "${{ github.workspace }}/builder/patches/feeds"/ppe/packages/*.patch; do
+            feed="feeds/$(basename "$(dirname "$p")")"
+            if [ -d "$feed" ]; then
+              if patch -p1 -d "$feed" --dry-run --forward <"$p" >/dev/null 2>&1; then
+                echo "--> Patching $feed with $(basename "$p")"
+                patch -p1 -d "$feed" --forward <"$p"
+              else
+                echo "--> Skipping $(basename "$p") (already applied or not applicable)"
+              fi
+            fi
+          done
+          shopt -u nullglob
+
+      - name: Build
+        working-directory: openwrt
+        run: |
+          set -euo pipefail
+          if ! make -j"$(nproc)"; then
+            echo "::warning::Parallel build failed; retrying single-threaded for diagnostics"
+            make -j1 V=s
+          fi
+
+      - name: Pack APK Packages
+        working-directory: openwrt
+        run: |
+          echo "### Pakowanie skompilowanych pakietów .apk ###"
+          if [ -d "bin/packages" ]; then
+            tar -czf bin/targets/${{ env.TARGET }}/compiled_packages.tar.gz -C bin packages
+            echo "-> Pakiety zostały pomyślnie spakowane do compiled_packages.tar.gz"
+          else
+            echo "-> OSTRZEŻENIE: Nie znaleziono katalogu bin/packages!"
+          fi
+
+      - name: Publish release
+        id: release
+        env:
+          UPSTREAM_SHA: ${{ needs.check.outputs.sha }}
+        run: |
+          set -euo pipefail
+          date=$(date -u +%F)
+          timestamp=$(date -u +%Y%m%dT%H%M%SZ)
+          tag_name="${RELEASE_PREFIX}-${timestamp}-${GITHUB_RUN_ID}-ppe-offload"
+          echo "release_tag=$tag_name" >>"$GITHUB_OUTPUT"
+
+          {
+            echo "## OpenWrt Build — PPE Images"
+            echo "- **Date**: $date"
+            echo "- **Variant**: \`ppe\`"
+            echo "- **Device**: \`${{ env.DEVICE }}\`"
+            echo "- **Target**: \`${{ env.TARGET }}\`"
+            echo "- **Upstream**: \`${{ env.UPSTREAM_REPO }}@${UPSTREAM_SHA}\`"
+            echo "- **Trigger**: \`${GITHUB_EVENT_NAME}\`"
+            echo "- **Compiled by**: @Payti"
+          } >release_notes.md
+
+          mapfile -t assets < <(find "openwrt/bin/targets/${TARGET}/" -type f -not -path "*/packages/*")
+
+          for asset in "${assets[@]}"; do
+            dir=$(dirname "$asset")
+            base=$(basename "$asset")
+            if [[ ! "$base" =~ ^ppe ]]; then
+              mv "$asset" "$dir/ppe-$base"
+            fi
+          done
+
+          mapfile -t renamed_assets < <(find "openwrt/bin/targets/${TARGET}/" -type f -not -path "*/packages/*")
+
+          gh release create "$tag_name" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "OpenWrt PPE Images $date" \
+            --notes-file release_notes.md \
+            "${renamed_assets[@]}"
+
+          {
+            echo "## Release (ppe)"
+            echo "- tag: \`${tag_name}\`"
+            echo "- assets: ${#renamed_assets[@]}"
+          } >>"$GITHUB_STEP_SUMMARY"
+
+  prune:
+    name: Prune old releases
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Prune
+        run: bash scripts/prune-releases.sh
