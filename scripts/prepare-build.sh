@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prepare a checked-out OpenWrt tree for the build:
 #   1. append the custom feeds and run feeds update/install
-#   2. assemble .config from the common + device configs, run defconfig
+#   2. assemble .config from the device config, run defconfig
 #   3. disable bundling of custom feeds into the image
 #   4. layer overlay files: common -> device, each with its variant on top
 #      (most specific wins)
@@ -16,7 +16,7 @@
 #   FEEDS         newline-separated `src-git <name> <url>` lines for feeds.conf;
 #                 a name already in feeds.conf replaces that feed (fork stand-in)
 #   CONFIG_FRAGMENT  repo-relative .config fragment appended last (flavour, e.g. mesh)
-#   COMMON        devices/<COMMON> holding the shared config and overlays (default: common)
+#   COMMON        optional devices/<COMMON> holding shared overlays (default: common)
 
 set -euo pipefail
 
@@ -34,10 +34,9 @@ COMMON_DIR="$BUILDER_REPO/devices/${COMMON:-common}"
 DEVICE_DIR="$BUILDER_REPO/devices/$DEVICE"
 
 [[ -f "$DEVICE_DIR/config" ]] || log::die "$DEVICE_DIR/config not found"
-[[ -f "$COMMON_DIR/config" ]] || log::die "$COMMON_DIR/config not found"
 
-# Least to most specific; the last file wins on a symbol set in several.
-CONFIGS=("$COMMON_DIR/config" "$DEVICE_DIR/config")
+# The device config is the base; an optional flavour fragment is appended last.
+CONFIGS=("$DEVICE_DIR/config")
 if [[ -n "$CONFIG_FRAGMENT" ]]; then
   [[ -f "$BUILDER_REPO/$CONFIG_FRAGMENT" ]] ||
     log::die "CONFIG_FRAGMENT $CONFIG_FRAGMENT not found in $BUILDER_REPO"
@@ -92,7 +91,7 @@ for p in "$BUILDER_REPO/patches/feeds/$VARIANT"/*/*.patch; do
 done
 shopt -u nullglob
 
-# 2. Assemble .config from the common + device configs, then resolve.
+# 2. Assemble .config from the device config, then resolve.
 log::info "Assembling .config from ${CONFIGS[*]#"$BUILDER_REPO"/}"
 cat "${CONFIGS[@]}" >.config
 make defconfig
@@ -132,8 +131,8 @@ if [[ -n "$FEEDS" ]]; then
 fi
 sed -i 's/^CONFIG_FEED_luci_extra=.*/# CONFIG_FEED_luci_extra is not set/' .config || true
 
-# 4. Layer overlay files: common -> device, variant on top of each (most
-#    specific wins).
+# 4. Layer overlay files: optional common -> device, variant on top of each
+#    (most specific wins).
 log::info "Applying overlay files"
 mkdir -p files
 for src in "$COMMON_DIR/files" "$COMMON_DIR/files.$VARIANT" \
