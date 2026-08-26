@@ -43,7 +43,7 @@ env:
   DEVICE: xiaomi_ax3600
   DEVICE_DIR: devices/xiaomi_ax3600
   RELEASE_PREFIX: ppe
-  KEEP: "4"
+  KEEP: "2"
   FEEDS: |
     src-git luci https://github.com/JuliusBairaktaris/luci.git;luci-app-ppe-qos
     src-git obsy https://github.com/obsy/packages
