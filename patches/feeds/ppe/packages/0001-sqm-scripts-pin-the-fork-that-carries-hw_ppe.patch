@@ -3,8 +3,13 @@ sqm-scripts: pin the fork that carries the hw_ppe script
 hw_ppe.qos drives the PPE port shaper and its bulk queue from the SQM
 config, and exists only in the sqm-scripts fork - upstream sqm-scripts has
 no hardware backend. The pin is the tip of the fork's hw-ppe-offload
-branch, which pairs with the qca_ppe driver on ppe-flow-offload: both
-sides shape the port the host is behind rather than metering the wire.
+branch, rebased onto upstream v1.8.0 so it carries the nftables marking
+the feed now builds against, and it pairs with the qca_ppe driver on
+ppe-flow-offload: both sides shape the port the host is behind rather than
+metering the wire.
+
+PKG_VERSION names a release upstream has not made, so the fork's tarball
+never shares a download name with the one the unpatched feed fetches.
 
 Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
 --- a/net/sqm-scripts/Makefile
@@ -15,10 +20,9 @@ Signed-off-by: Julius Bairaktaris <julius@bairaktaris.de>
  PKG_NAME:=sqm-scripts
 -PKG_SOURCE_VERSION:=77cf89e82ced9b215cc02f64fd471f5278b7d031
 -PKG_VERSION:=1.8.0
--PKG_RELEASE:=1
-+PKG_SOURCE_VERSION:=27ce43c29252b21e7dd34d710ad3d70a4d8fca07
-+PKG_VERSION:=1.7.4
-+PKG_RELEASE:=3
++PKG_SOURCE_VERSION:=6b32d92c815e099d55cd0800d12e0db6e8ccef17
++PKG_VERSION:=1.8.1
+ PKG_RELEASE:=1
  
  PKG_SOURCE_PROTO:=git
 -PKG_SOURCE_URL:=https://github.com/tohojo/sqm-scripts
