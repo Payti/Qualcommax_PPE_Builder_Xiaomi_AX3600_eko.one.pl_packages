@@ -368,6 +368,18 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+          PPE_LUCI_PO_SOURCE="${{ github.workspace }}/builder/${{ env.DEVICE_DIR }}/po/pl/luci-app-ppe-qos.po"
+          PPE_LUCI_APP_DIR=$(find "${{ github.workspace }}/openwrt/feeds/luci" -type d -name "luci-app-ppe-qos" | head -n 1)
+          if [ -f "$PPE_LUCI_PO_SOURCE" ]; then
+            if [ -n "$PPE_LUCI_APP_DIR" ] && [ -d "$PPE_LUCI_APP_DIR" ]; then
+              mkdir -p "$PPE_LUCI_APP_DIR/po/pl"
+              cp "$PPE_LUCI_PO_SOURCE" "$PPE_LUCI_APP_DIR/po/pl/luci-app-ppe-qos.po"
+              echo "--> SUCCESS: Dodano polskie tłumaczenie luci-app-ppe-qos do feedu LuCI"
+            else
+              echo "::warning::Nie znaleziono katalogu luci-app-ppe-qos w feedzie LuCI; pomijam tłumaczenie."
+            fi
+          fi
+
           echo "### Usuwanie pakietów dahdi-linux, rtl8812au-ct, xdp-tools ponieważ się nie kompilują! ###"
           rm -rf package/feeds/telephony/dahdi-linux
           rm -rf package/kernel/rtl8812au-ct

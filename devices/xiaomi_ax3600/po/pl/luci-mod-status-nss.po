@@ -21,10 +21,10 @@ msgid "min"
 msgstr "min"
 
 msgid "avg"
-msgstr "śr."
+msgstr "avg"
 
 msgid "max"
-msgstr "maks."
+msgstr "max"
 
 msgid "No thermal readings"
 msgstr "Brak odczytów temperatury"
