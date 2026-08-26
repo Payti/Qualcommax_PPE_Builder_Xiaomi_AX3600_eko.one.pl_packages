@@ -99,7 +99,6 @@ return baseclass.extend({
 			: E("div", { style: "padding: 10px; color: var(--error-color, red);" }, [_('No thermal readings')]);
 
 		return E("div", {}, [
-			E("h3", {}, [_('Thermal')]),
 			E("div", {}, [thermalContent])
 		]);
 	}
