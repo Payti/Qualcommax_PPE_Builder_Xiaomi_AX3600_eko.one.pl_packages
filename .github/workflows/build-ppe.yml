@@ -244,7 +244,8 @@ jobs:
               'CONFIG_PACKAGE_sqm-scripts=y' \
               'CONFIG_PACKAGE_luci-app-sqm=y' \
               'CONFIG_PACKAGE_ppe-qos=y' \
-              'CONFIG_PACKAGE_luci-app-ppe-qos=y' >> "$CONFIG_FILE"
+              'CONFIG_PACKAGE_luci-app-ppe-qos=y' \
+              'CONFIG_PACKAGE_luci-i18n-ppe-qos-pl=y' >> "$CONFIG_FILE"
 
             KERNEL_CONFIG_TARGET=$(find ${{ github.workspace }}/openwrt/target/linux/qualcommax/ -name "config-6.18" | head -n 1)
             if [ -f "$KERNEL_CONFIG_TARGET" ]; then
@@ -263,6 +264,18 @@ jobs:
           # 🇵🇱 SYSTEMOWE SCALENIE I18N DLA PPE (DODANIE DO RDZENIA LUCI-BASE)
           # =========================================================================
           SOURCE_PO_DIR="${{ github.workspace }}/builder/$DEVICE_DIR/po/pl"
+          PPE_LUCI_PO_SOURCE="$SOURCE_PO_DIR/luci-app-ppe-qos.po"
+          PPE_LUCI_APP_DIR=$(find "${{ github.workspace }}/openwrt/feeds/luci" -type d -name "luci-app-ppe-qos" | head -n 1)
+          if [ -f "$PPE_LUCI_PO_SOURCE" ]; then
+            if [ -n "$PPE_LUCI_APP_DIR" ] && [ -d "$PPE_LUCI_APP_DIR" ]; then
+              mkdir -p "$PPE_LUCI_APP_DIR/po/pl"
+              cp "$PPE_LUCI_PO_SOURCE" "$PPE_LUCI_APP_DIR/po/pl/luci-app-ppe-qos.po"
+              echo "--> SUCCESS: Dodano polskie tłumaczenie luci-app-ppe-qos do feedu LuCI"
+            else
+              echo "::warning::Nie znaleziono katalogu luci-app-ppe-qos w feedzie LuCI; pomijam tłumaczenie."
+            fi
+          fi
+
           LUCI_BASE_PO="${{ github.workspace }}/openwrt/feeds/luci/modules/luci-base/po/pl/base.po"
 
           # Dynamiczne poszukiwanie pliku base.po w przypadku przesunięć w feedach LuCI
@@ -367,18 +380,6 @@ jobs:
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-
-          PPE_LUCI_PO_SOURCE="${{ github.workspace }}/builder/${{ env.DEVICE_DIR }}/po/pl/luci-app-ppe-qos.po"
-          PPE_LUCI_APP_DIR=$(find "${{ github.workspace }}/openwrt/feeds/luci" -type d -name "luci-app-ppe-qos" | head -n 1)
-          if [ -f "$PPE_LUCI_PO_SOURCE" ]; then
-            if [ -n "$PPE_LUCI_APP_DIR" ] && [ -d "$PPE_LUCI_APP_DIR" ]; then
-              mkdir -p "$PPE_LUCI_APP_DIR/po/pl"
-              cp "$PPE_LUCI_PO_SOURCE" "$PPE_LUCI_APP_DIR/po/pl/luci-app-ppe-qos.po"
-              echo "--> SUCCESS: Dodano polskie tłumaczenie luci-app-ppe-qos do feedu LuCI"
-            else
-              echo "::warning::Nie znaleziono katalogu luci-app-ppe-qos w feedzie LuCI; pomijam tłumaczenie."
-            fi
-          fi
 
           echo "### Usuwanie pakietów dahdi-linux, rtl8812au-ct, xdp-tools ponieważ się nie kompilują! ###"
           rm -rf package/feeds/telephony/dahdi-linux
