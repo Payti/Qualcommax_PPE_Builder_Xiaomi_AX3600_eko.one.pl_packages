@@ -283,18 +283,18 @@ jobs:
             LUCI_BASE_PO=$(find ${{ github.workspace }}/openwrt/ -path "*/luci-base/po/pl/base.po" | head -n 1)
           fi
 
-          if [ -f "$SOURCE_PO_DIR/luci-mod-status-nss.po" ]; then
-            if [ -n "$LUCI_BASE_PO" ] && [ -f "$LUCI_BASE_PO" ]; then
-              {
-                printf '\n'
-                cat "$SOURCE_PO_DIR/luci-mod-status-nss.po"
-              } >> "$LUCI_BASE_PO"
-              echo "--> SUCCESS: Pomyślnie scalono frazy luci-mod-status-nss z głównym słownikiem systemowym po/pl/base.po"
-            else
-              echo "::warning::Nie znaleziono pliku po/pl/base.po; pomijam scalanie tłumaczeń luci-mod-status-nss."
-            fi
+          if [ -n "$LUCI_BASE_PO" ] && [ -f "$LUCI_BASE_PO" ]; then
+            for SOURCE_PO in "$SOURCE_PO_DIR/luci-app-ppe-qos.po" "$SOURCE_PO_DIR/luci-mod-status-nss.po"; do
+              if [ -f "$SOURCE_PO" ]; then
+                {
+                  printf '\n'
+                  awk 'BEGIN { header=1 } header && /^$/ { header=0; next } !header { print }' "$SOURCE_PO"
+                } >> "$LUCI_BASE_PO"
+                echo "--> SUCCESS: Pomyślnie scalono $(basename "$SOURCE_PO" .po) z głównym słownikiem systemowym po/pl/base.po"
+              fi
+            done
           else
-            echo "::warning::Brak opcjonalnego pliku $SOURCE_PO_DIR/luci-mod-status-nss.po; pomijam scalanie tłumaczeń."
+            echo "::warning::Nie znaleziono pliku po/pl/base.po; pomijam scalanie tłumaczeń PPE."
           fi
 
           # Ponowne skopiowanie pliku config i przeładowanie w openwrt
