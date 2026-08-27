@@ -40,6 +40,14 @@ Wi-Fi is **enabled out of the box**: SSID `OpenWrt`, WPA2/WPA3 (`sae-mixed`),
 password `openwrt-ppe`. The password is public in this repo — **change it on
 first login** (LuCI → Network → Wireless).
 
+Remember turn on 'Hardware Flow Offloading' for maximum Gigabit speed and lower CPU usage.
+
+```sh
+uci set firewall.@defaults[0].flow_offloading_hw='1'
+uci commit firewall
+/etc/init.d/firewall restart
+```
+
 ---
 
 ## What ships by default
