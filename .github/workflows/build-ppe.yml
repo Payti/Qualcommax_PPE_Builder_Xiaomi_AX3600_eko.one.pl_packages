@@ -438,7 +438,7 @@ jobs:
             echo "- **Variant**: \`ppe\`"
             echo "- **Device**: \`${{ env.DEVICE }}\`"
             echo "- **Target**: \`${{ env.TARGET }}\`"
-            echo "- **Upstream**: \`${{ env.UPSTREAM_REPO }}@${UPSTREAM_SHA}\`"
+            echo "- **Upstream**: \`${{ env.UPSTREAM_REPO }}@${UPSTREAM_SHA}\` (branch \`ppe-flow-offload\`)"
             echo "- **Trigger**: \`${GITHUB_EVENT_NAME}\`"
             echo "- **Compiled by**: @Payti"
           } >release_notes.md
