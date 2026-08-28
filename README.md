@@ -43,6 +43,7 @@ first login** (LuCI → Network → Wireless).
 Remember turn on 'Hardware Flow Offloading' for maximum Gigabit speed and lower CPU usage.
 
 ```sh
+uci set firewall.@defaults[0].flow_offloading='1
 uci set firewall.@defaults[0].flow_offloading_hw='1'
 uci commit firewall
 /etc/init.d/firewall restart
