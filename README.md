@@ -1,6 +1,6 @@
 # Qualcommax PPE Builder
 
-### OpenWrt image builder for the Xiaomi AX3600 — PPE hardware offload on the upstream EDMA drivers
+### OpenWrt image builder for the Xiaomi AX3600 — PPE (Packet Processing Engine) hardware offload on the upstream EDMA drivers
 
 [![Build](https://img.shields.io/github/actions/workflow/status/Payti/Qualcommax_PPE_Builder_Xiaomi_AX3600_eko.one.pl_packages/build-ppe.yml?branch=main&style=flat-square&logo=github&label=Build)](https://github.com/Payti/Qualcommax_PPE_Builder_Xiaomi_AX3600_eko.one.pl_packages/actions/workflows/build-ppe.yml)
 [![Lint](https://img.shields.io/github/actions/workflow/status/Payti/Qualcommax_PPE_Builder_Xiaomi_AX3600_eko.one.pl_packages/lint.yml?branch=main&style=flat-square&logo=github&label=Lint)](https://github.com/Payti/Qualcommax_PPE_Builder_Xiaomi_AX3600_eko.one.pl_packages/actions/workflows/lint.yml)
