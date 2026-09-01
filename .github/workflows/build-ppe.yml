@@ -51,7 +51,7 @@ env:
 jobs:
   check:
     name: Check ppe-flow-offload
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
@@ -86,7 +86,7 @@ jobs:
     name: Build OpenWrt PPE images
     needs: check
     if: needs.check.outputs.need == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 360
     permissions:
       contents: write
@@ -470,7 +470,7 @@ jobs:
   prune:
     name: Prune old releases
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: write
