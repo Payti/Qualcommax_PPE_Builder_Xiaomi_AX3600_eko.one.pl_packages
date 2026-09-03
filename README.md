@@ -58,7 +58,7 @@ included desktop-router config:
 
 | Area | What's on |
 |---|---|
-| **Wi-Fi** | ath11k NSS offload (wifili) on both radios (`CONFIG_ATH11K_NSS_SUPPORT`); enabled by default (SSID `OpenWrt`, WPA2/WPA3, password `openwrt-ppe` — change it) |
+| **Wi-Fi** | enabled by default (SSID `OpenWrt`, WPA2/WPA3, password `openwrt-ppe` — change it) |
 | **Security** | OpenSSH only (post-quantum KEX, AEAD/ETM, RSA ≥ 3072), `PKG_*` hardening (ASLR/PIE, stack protector, FORTIFY_3, RELRO, seccomp), WAN DROP + BCP38, HTTPS redirect, OQS provider in OpenSSL |
 | **Toolchain** | GCC 15 + Graphite, Binutils 2.46, Mold linker, LTO, `-mcpu=cortex-a53+crc+crypto`; ccache off |
 | **Userland** | LuCI (SSL), `htop`, `iperf3`, `curl`, BBR |
