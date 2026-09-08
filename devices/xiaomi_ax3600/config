@@ -3,6 +3,11 @@
 #
 # prepare-build.sh copies this to .config and runs `make defconfig`.
 #
+# Built from the ppe-offload branch, which carries the whole offload as one
+# checkout: the switch series (PR openwrt#24806) plus the four features that
+# each need a pending kernel patch (openwrt#25078, #25079, #25080, #25081) and
+# the ppe-qos package (openwrt#25082). The offload lives in the kernel driver,
+# so there is no NSS feed and no CONFIG_NSS_* symbol anywhere here.
 
 ## Target Platform
 CONFIG_TARGET_qualcommax=y
