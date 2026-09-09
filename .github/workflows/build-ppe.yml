@@ -33,7 +33,7 @@ permissions:
 
 env:
   UPSTREAM_REPO: JuliusBairaktaris/openwrt-nss-edma
-  UPSTREAM_REF: ppe-offload
+  UPSTREAM_REF: ppe-flow-offload
   # No overlay files for this flavour; VARIANT picks files.<variant> and
   # patches/feeds/<variant>.
   VARIANT: ppe
@@ -50,7 +50,7 @@ env:
 
 jobs:
   check:
-    name: Check ppe-offload
+    name: Check ppe-flow-offload
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     env:
